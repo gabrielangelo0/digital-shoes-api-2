@@ -1,6 +1,10 @@
-const express = require('express')
+import express from 'express';
+import { PrismaClient } from './generated/prisma/index.js';
+
 const app = express()
-const port = 3000
+const port = 3000;
+
+const prisma = new PrismaClient()
 
 app.use(express.json());
 
@@ -16,22 +20,39 @@ app.get('/shoes', (req, res) => {
 })
 
 // Adicionar um novo sapato
-app.post('/shoes', (req, res) => {
-    // const newShoe = {
-    //     name: "Air Max 90",
-    //     brand: "Nike",
-    //     price: 720.00,
-    //     size: 42,
-    //     color: "cecece",
-    //     url: "",
-    //     stock: true
-    // }
-    console.log(req.body);
+app.post('/shoes', async (req, res) => {
+  console.log(req.body);
+  const { name, size, color, brand, price, photoUrl, stock } = req.body;
 
-    res.send('Shoe added successfully!');
+  if (!name) {
+    return res.status(400).json({ error: 'Name is required.' });
+  }
 
-    // shoes.push(newShoe);
-    // res.status(201).json(newShoe);
+  if (!size) {
+    return res.status(400).json({ error: 'Size is required.' });
+  }
+
+  if (!color) {
+    return res.status(400).json({ error: 'Color is required.' });
+  }
+
+  await prisma.shoes.create({
+    data: {
+      name,
+      size,
+      color,
+      brand,
+      price,
+      photoUrl,
+      stock
+    }
+  })
+  // console.log(req.body);
+
+  res.status(201).json({ name, size, color });
+
+  // shoes.push(newShoe);
+  // res.status(201).json(newShoe);
 })
 
 app.listen(port, () => {
