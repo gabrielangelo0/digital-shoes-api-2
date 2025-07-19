@@ -1,5 +1,6 @@
 import express from 'express';
 import { PrismaClient } from './generated/prisma/index.js';
+import cors from 'cors';
 
 const app = express()
 const port = 3000;
@@ -7,6 +8,7 @@ const port = 3000;
 const prisma = new PrismaClient()
 
 app.use(express.json());
+app.use(cors());
 
 let shoes = [];
 
@@ -15,8 +17,10 @@ app.get('/', (req, res) => {
 })
 
 // Listar todos os sapatos
-app.get('/shoes', (req, res) => {
-  res.json(shoes);
+app.get('/shoes', async (req, res) => {
+  const shoes = await prisma.shoes.findMany();
+  
+  res.status(200).json(shoes);
 })
 
 // Adicionar um novo sapato
@@ -24,16 +28,8 @@ app.post('/shoes', async (req, res) => {
   console.log(req.body);
   const { name, size, color, brand, price, photoUrl, stock } = req.body;
 
-  if (!name) {
-    return res.status(400).json({ error: 'Name is required.' });
-  }
-
-  if (!size) {
-    return res.status(400).json({ error: 'Size is required.' });
-  }
-
-  if (!color) {
-    return res.status(400).json({ error: 'Color is required.' });
+  if (!name || !size || !color || !brand || !price || !photoUrl || !stock) {
+    return res.status(400).json({ error: 'All fields are required.' });
   }
 
   await prisma.shoes.create({
@@ -47,12 +43,8 @@ app.post('/shoes', async (req, res) => {
       stock
     }
   })
-  // console.log(req.body);
 
   res.status(201).json({ name, size, color });
-
-  // shoes.push(newShoe);
-  // res.status(201).json(newShoe);
 })
 
 app.listen(port, () => {
